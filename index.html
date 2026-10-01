@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MILANGAFC - Gestor de Equipo y Cartas FIFA</title>
+  <title>FUT 7 - Gestor de Equipo y Cartas FIFA</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <!-- FontAwesome Icons CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -369,117 +370,6 @@
     .tactical-position-slot:hover {
       transform: scale(1.05) translate(-48%, -48%);
     }
-
-    /* ==========================================================================
-       ANIMATIONS & MICRO-INTERACTIONS
-       ========================================================================== */
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.9) translateY(10px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    @keyframes modalBackdropIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes cardPopIn {
-      0% { opacity: 0; transform: translateY(18px) scale(0.88); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    @keyframes softPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35); }
-      50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0); }
-    }
-    @keyframes floatBob {
-      0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-      50% { transform: translate(-50%, -50%) translateY(-5px); }
-    }
-    @keyframes logoSpin {
-      0% { transform: rotate(0deg) scale(1); }
-      50% { transform: rotate(8deg) scale(1.08); }
-      100% { transform: rotate(0deg) scale(1); }
-    }
-    @keyframes toastPop {
-      0% { opacity: 0; transform: translateY(14px) scale(0.9); }
-      60% { opacity: 1; transform: translateY(-2px) scale(1.02); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    body { animation: fadeInUp 0.4s ease-out; }
-
-    .tab-content:not(.hidden) { animation: fadeInUp 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
-
-    .tab-btn {
-      transition: color 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, transform 0.15s ease;
-    }
-    .tab-btn:active { transform: scale(0.95); }
-
-    button, .pos-filter-btn {
-      transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
-    }
-    button:active { transform: scale(0.95); }
-
-    #add-player-header-btn:hover { box-shadow: 0 6px 18px -4px rgba(16, 185, 129, 0.5); }
-
-    /* Logo mark subtle idle animation */
-    header .w-10.h-10.rounded-xl { transition: transform 0.3s ease; }
-    header .w-10.h-10.rounded-xl:hover { animation: logoSpin 0.6s ease; }
-
-    /* Modal open animations */
-    #player-modal:not(.hidden), #swap-modal:not(.hidden), #detail-modal:not(.hidden) {
-      animation: modalBackdropIn 0.2s ease-out;
-    }
-    #player-modal:not(.hidden) > div, #swap-modal:not(.hidden) > div, #detail-modal:not(.hidden) > div {
-      animation: scaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    /* FUT card entrance pop */
-    .fut-card-container { animation: cardPopIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
-
-    /* Photo preview transition */
-    #modal-photo-preview-wrap { transition: border-color 0.3s ease, transform 0.2s ease; }
-
-    /* Bench card lift on hover + drag affordance */
-    .bench-fut-card-wrap {
-      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
-      touch-action: none;
-      cursor: grab;
-    }
-    .bench-fut-card-wrap:hover { transform: translateY(-5px) scale(1.03); }
-    .bench-fut-card-wrap:active { cursor: grabbing; }
-    .bench-dragging-source { opacity: 0.3; transform: scale(0.94); }
-
-    /* Drag ghost card that follows the pointer */
-    .drag-ghost-card {
-      position: fixed;
-      z-index: 9999;
-      pointer-events: none;
-      filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.65));
-      transition: transform 0.05s linear;
-    }
-
-    /* Pitch slot highlighted as a valid drop target */
-    .tactical-position-slot.drop-target {
-      animation: floatBob 0.7s ease-in-out infinite;
-      z-index: 30;
-    }
-    .tactical-position-slot.drop-target .fut-card,
-    .tactical-position-slot.drop-target > div {
-      outline: 3px dashed #4ade80;
-      outline-offset: 5px;
-      border-radius: 16px;
-    }
-
-    .pitch-board { transition: box-shadow 0.35s ease; }
-    .pitch-board.drag-active {
-      box-shadow: inset 0 0 60px rgba(0,0,0,0.8), 0 0 30px rgba(74, 222, 128, 0.6);
-    }
-
-    /* Toast entrance handled via JS classes, add a nicer pop */
-    #toast-container > div.toast-visible { animation: toastPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -495,7 +385,7 @@
         </div>
         <div>
           <h1 class="text-xl font-extrabold tracking-wider bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
-            MILANGAFC
+            FUT 7 MANAGER
           </h1>
           <p class="text-xs text-gray-400 font-medium hidden sm:block">Gestión de Fútbol 7 & Cartas FIFA</p>
         </div>
@@ -528,7 +418,7 @@
         </div>
 
         <!-- Add Player Button (Visible in Admin) -->
-        <button id="add-player-header-btn" onclick="openAddPlayerModal()" class="hidden sm:flex items-center space-x-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-xs px-3 py-2 rounded-lg transition shadow-md shadow-emerald-900/30">
+        <button id="add-player-header-btn" onclick="openAddPlayerModal()" class="hidden items-center space-x-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-xs px-3 py-2 rounded-lg transition shadow-md shadow-emerald-900/30">
           <i class="fa-solid fa-plus text-xs"></i>
           <span>Nuevo Jugador</span>
         </button>
@@ -607,7 +497,7 @@
         
         <!-- Football Pitch Canvas / Layout -->
         <div class="lg:col-span-8 flex justify-center">
-          <div id="pitch-board-el" class="pitch-board w-full max-w-2xl h-[580px] sm:h-[620px] p-4 flex flex-col justify-between relative shadow-2xl">
+          <div class="pitch-board w-full max-w-2xl h-[580px] sm:h-[620px] p-4 flex flex-col justify-between relative shadow-2xl">
             
             <!-- Pitch Visual Lines -->
             <div class="pitch-lines">
@@ -632,13 +522,11 @@
               <i class="fa-solid fa-chair text-amber-400"></i>
               Banquillo de Suplentes (<span id="bench-count">0</span>)
             </h3>
-            <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded font-semibold flex items-center gap-1">
-              <i class="fa-solid fa-arrows-up-down-left-right"></i> Arrastra a la cancha
-            </span>
+            <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded font-semibold">Clic para rotar</span>
           </div>
 
-          <!-- Bench Cards List (Scrollable, draggable onto the pitch) -->
-          <div id="bench-cards-container" class="flex-grow overflow-y-auto pr-1 grid grid-cols-2 gap-3 content-start">
+          <!-- Bench Cards List (Scrollable) -->
+          <div id="bench-cards-container" class="flex-grow overflow-y-auto space-y-3 pr-1">
             <!-- Dynamically populated bench cards -->
           </div>
         </div>
@@ -921,28 +809,8 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-300 uppercase mb-1">Foto del Jugador</label>
-
-          <div class="flex items-center gap-3">
-            <!-- Preview -->
-            <div id="modal-photo-preview-wrap" class="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden border-2 border-dashed border-gray-700 bg-gray-800 flex items-center justify-center transition-all duration-300">
-              <img id="modal-photo-preview" src="" alt="Vista previa" class="w-full h-full object-cover hidden">
-              <i id="modal-photo-preview-icon" class="fa-solid fa-image text-gray-500 text-xl"></i>
-            </div>
-
-            <div class="flex-grow space-y-2">
-              <!-- Upload button -->
-              <label for="modal-player-photo-file" class="cursor-pointer w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-amber-500/60 text-gray-200 text-xs font-bold px-3 py-2 rounded-xl transition-all duration-200 active:scale-95">
-                <i class="fa-solid fa-upload text-amber-400"></i>
-                <span>Subir Imagen</span>
-              </label>
-              <input type="file" id="modal-player-photo-file" accept="image/*" class="hidden" onchange="handlePlayerPhotoUpload(event)">
-
-              <!-- URL fallback -->
-              <input type="url" id="modal-player-photo" placeholder="...o pega una URL de imagen" oninput="handlePlayerPhotoUrlInput(this.value)" class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-1.5 text-xs focus:border-amber-500 outline-none">
-            </div>
-          </div>
-          <input type="hidden" id="modal-player-photo-data" value="">
+          <label class="block text-xs font-bold text-gray-300 uppercase mb-1">URL Foto Jugador (Transparente o Cuadrada)</label>
+          <input type="url" id="modal-player-photo" placeholder="https://..." class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm focus:border-amber-500 outline-none">
         </div>
 
         <!-- Initial Base Attr Stats -->
@@ -1355,46 +1223,75 @@
       selectedSwapSlotIndex: null
     };
 
-    function initAppState() {
-      const savedPlayers = localStorage.getItem('fut7_players');
-      const savedMatches = localStorage.getItem('fut7_matches');
-      const savedState = localStorage.getItem('fut7_settings');
+    const SUPABASE_URL = 'https://spsbqosgegplbjnoghzh.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_1dRb8UMFtmlgpEPgoiqtCg_CihElQuB';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      if (savedPlayers) {
-        try { appState.players = JSON.parse(savedPlayers); } catch(e) { appState.players = DEFAULT_PLAYERS; }
-      } else {
-        appState.players = DEFAULT_PLAYERS;
+    let reloadTimer;
+    let isSaving = false;
+
+    async function loadData() {
+      try {
+        const [pl, ma, se] = await Promise.all([
+          sb.from('players').select('data'),
+          sb.from('matches').select('data'),
+          sb.from('settings').select('data').eq('id', 'main').maybeSingle()
+        ]);
+        if (pl.error || ma.error) throw (pl.error || ma.error);
+        if (pl.data.length) appState.players = pl.data.map(r => r.data);
+        if (ma.data.length) {
+          appState.matches = ma.data.map(r => r.data).sort((a, b) => b.date.localeCompare(a.date));
+        }
+        const s = se.data && se.data.data;
+        if (s && s.formation) appState.formation = s.formation;
+        if (s && s.starting7 && s.starting7.length === 7) appState.starting7 = s.starting7;
+        document.getElementById('formation-select').value = appState.formation;
+        renderAllTabs();
+      } catch (e) {
+        console.error(e);
+        showToast('No se pudo conectar con Supabase');
       }
-
-      if (savedMatches) {
-        try { appState.matches = JSON.parse(savedMatches); } catch(e) { appState.matches = DEFAULT_MATCHES; }
-      } else {
-        appState.matches = DEFAULT_MATCHES;
-      }
-
-      if (savedState) {
-        try {
-          const parsed = JSON.parse(savedState);
-          if (parsed.formation) appState.formation = parsed.formation;
-          if (parsed.starting7 && parsed.starting7.length === 7) appState.starting7 = parsed.starting7;
-        } catch(e) {}
-      }
-
-      document.getElementById('admin-mode-toggle').checked = appState.adminMode;
-      document.getElementById('formation-select').value = appState.formation;
-      document.getElementById('match-date').valueAsDate = new Date();
-
-      saveToStorage();
-      renderAllTabs();
     }
 
-    function saveToStorage() {
-      localStorage.setItem('fut7_players', JSON.stringify(appState.players));
-      localStorage.setItem('fut7_matches', JSON.stringify(appState.matches));
-      localStorage.setItem('fut7_settings', JSON.stringify({
-        formation: appState.formation,
-        starting7: appState.starting7
-      }));
+    function subscribeRealtime() {
+      sb.channel('cambios')
+        .on('postgres_changes', { event: '*', schema: 'public' }, () => {
+          clearTimeout(reloadTimer);
+          reloadTimer = setTimeout(() => { if (!isSaving) loadData(); }, 600);
+        })
+        .subscribe();
+    }
+
+    async function initAppState() {
+      appState.adminMode = false;
+      appState.players = DEFAULT_PLAYERS;
+      appState.matches = DEFAULT_MATCHES;
+      await loadData();
+      subscribeRealtime();
+      document.getElementById('admin-mode-toggle').checked = false;
+      document.getElementById('add-player-header-btn').classList.add('hidden');
+      document.getElementById('add-player-header-btn').classList.remove('flex');
+      document.getElementById('match-date').valueAsDate = new Date();
+    }
+
+    async function saveToStorage() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return;
+      isSaving = true;
+      try {
+        const r1 = await sb.from('players').upsert(appState.players.map(p => ({ id: p.id, data: p })));
+        const r2 = await sb.from('matches').upsert(appState.matches.map(m => ({ id: m.id, data: m })));
+        const r3 = await sb.from('settings').upsert({
+          id: 'main',
+          data: { formation: appState.formation, starting7: appState.starting7 }
+        });
+        if (r1.error || r2.error || r3.error) {
+          console.error(r1.error || r2.error || r3.error);
+          showToast('Error al guardar en Supabase');
+        }
+      } finally {
+        setTimeout(() => { isSaving = false; }, 1000);
+      }
     }
 
     /* ==========================================================================
@@ -1425,17 +1322,28 @@
       if (tabId === 'stats') renderLeaderboard();
     }
 
-    function toggleAdminMode(enabled) {
+    async function toggleAdminMode(enabled) {
+      if (enabled) {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+          const email = prompt('Email de admin:');
+          const password = prompt('Contraseña:');
+          const { error } = email && password
+            ? await sb.auth.signInWithPassword({ email, password })
+            : { error: true };
+          if (error) {
+            showToast('Login incorrecto');
+            document.getElementById('admin-mode-toggle').checked = false;
+            return;
+          }
+        }
+      } else {
+        await sb.auth.signOut();
+      }
       appState.adminMode = enabled;
       const addBtn = document.getElementById('add-player-header-btn');
-      if (enabled) {
-        addBtn.classList.remove('hidden');
-        addBtn.classList.add('flex');
-      } else {
-        addBtn.classList.add('hidden');
-        addBtn.classList.remove('flex');
-      }
-      
+      addBtn.classList.toggle('hidden', !enabled);
+      addBtn.classList.toggle('flex', enabled);
       renderSquadGrid();
       renderMatchHistory();
       showToast(enabled ? 'Modo Administrador activado' : 'Modo Vista activado');
@@ -1592,7 +1500,6 @@
         slotEl.className = 'tactical-position-slot absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer z-20';
         slotEl.style.top = `${slot.top}%`;
         slotEl.style.left = `${slot.left}%`;
-        slotEl.dataset.slotIndex = idx;
         slotEl.onclick = () => openSwapModal(idx, slot.title);
 
         if (player) {
@@ -1629,142 +1536,30 @@
         return;
       }
 
-      benchPlayers.forEach((p, i) => {
-        const wrap = document.createElement('div');
-        wrap.className = 'bench-fut-card-wrap flex flex-col items-center gap-1 select-none';
-        wrap.dataset.playerId = p.id;
+      benchPlayers.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'bg-gray-950/80 border border-gray-800 hover:border-amber-500/50 rounded-xl p-2.5 flex items-center justify-between transition cursor-pointer';
+        row.onclick = () => openSwapModalForBenchPlayer(p.id);
 
-        wrap.innerHTML = `
-          ${createFutCardHTML(p, { compact: true })}
-          <span class="text-[9px] text-gray-500 font-semibold text-center leading-tight">
-            <i class="fa-solid fa-hand-pointer text-amber-400/80"></i> Arrastra a la cancha
-          </span>
+        row.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <img class="w-9 h-9 rounded-lg object-cover border border-amber-500/30" src="${p.photo}" alt="${p.name}" onerror="this.src='https://placehold.co/36x36/1e293b/fbbf24?text=${p.name}'">
+            <div>
+              <span class="font-bold text-white text-xs block">${p.name}</span>
+              <span class="text-[10px] text-gray-400 font-semibold">${p.position} | Camiseta #${p.number || '10'}</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <div class="text-right">
+              <span class="font-fut font-bold text-amber-400 text-base block leading-none">${p.currentOvr}</span>
+              <span class="text-[9px] text-gray-500 uppercase font-bold">OVR</span>
+            </div>
+            <i class="fa-solid fa-arrow-right-arrow-left text-xs text-emerald-400"></i>
+          </div>
         `;
 
-        const cardEl = wrap.querySelector('.fut-card-container');
-        if (cardEl) cardEl.style.animationDelay = `${i * 0.04}s`;
-
-        initBenchCardDrag(wrap, p.id);
-        benchContainer.appendChild(wrap);
+        benchContainer.appendChild(row);
       });
-    }
-
-    /* ==========================================================================
-       BENCH → PITCH DRAG & DROP (Pointer Events: works for mouse, touch & pen)
-       ========================================================================== */
-    function initBenchCardDrag(wrapEl, playerId) {
-      wrapEl.addEventListener('pointerdown', (e) => {
-        if (e.pointerType === 'mouse' && e.button !== 0) return;
-        startBenchDrag(e, wrapEl, playerId);
-      });
-    }
-
-    function startBenchDrag(startEvent, wrapEl, playerId) {
-      const cardSourceEl = wrapEl.querySelector('.fut-card-container');
-      if (!cardSourceEl) return;
-
-      const startX = startEvent.clientX;
-      const startY = startEvent.clientY;
-      let dragging = false;
-      let ghost = null;
-      const pitchBoardEl = document.getElementById('pitch-board-el');
-
-      function clearDropHighlights() {
-        document.querySelectorAll('.tactical-position-slot.drop-target').forEach(el => el.classList.remove('drop-target'));
-      }
-
-      function onMove(ev) {
-        const dx = ev.clientX - startX;
-        const dy = ev.clientY - startY;
-
-        if (!dragging && Math.hypot(dx, dy) > 8) {
-          dragging = true;
-          wrapEl.classList.add('bench-dragging-source');
-          if (pitchBoardEl) pitchBoardEl.classList.add('drag-active');
-
-          const rect = cardSourceEl.getBoundingClientRect();
-          ghost = cardSourceEl.cloneNode(true);
-          ghost.classList.add('drag-ghost-card');
-          ghost.style.width = rect.width + 'px';
-          ghost.style.left = (ev.clientX - rect.width / 2) + 'px';
-          ghost.style.top = (ev.clientY - rect.height / 2) + 'px';
-          ghost.style.transform = 'scale(1.1) rotate(-4deg)';
-          document.body.appendChild(ghost);
-        }
-
-        if (dragging && ghost) {
-          ev.preventDefault();
-          const gw = ghost.offsetWidth || 110;
-          const gh = ghost.offsetHeight || 165;
-          ghost.style.left = (ev.clientX - gw / 2) + 'px';
-          ghost.style.top = (ev.clientY - gh / 2) + 'px';
-
-          clearDropHighlights();
-          const target = getPitchSlotAt(ev.clientX, ev.clientY);
-          if (target) target.classList.add('drop-target');
-        }
-      }
-
-      function onUp(ev) {
-        document.removeEventListener('pointermove', onMove);
-        document.removeEventListener('pointerup', onUp);
-        document.removeEventListener('pointercancel', onCancel);
-
-        clearDropHighlights();
-        if (pitchBoardEl) pitchBoardEl.classList.remove('drag-active');
-
-        if (dragging) {
-          if (ghost) ghost.remove();
-          wrapEl.classList.remove('bench-dragging-source');
-          suppressUpcomingClick();
-
-          const target = getPitchSlotAt(ev.clientX, ev.clientY);
-          if (target) {
-            placeBenchPlayerInSlot(playerId, parseInt(target.dataset.slotIndex, 10));
-          }
-        }
-      }
-
-      function onCancel() {
-        document.removeEventListener('pointermove', onMove);
-        document.removeEventListener('pointerup', onUp);
-        document.removeEventListener('pointercancel', onCancel);
-        clearDropHighlights();
-        if (pitchBoardEl) pitchBoardEl.classList.remove('drag-active');
-        if (ghost) ghost.remove();
-        wrapEl.classList.remove('bench-dragging-source');
-      }
-
-      document.addEventListener('pointermove', onMove);
-      document.addEventListener('pointerup', onUp);
-      document.addEventListener('pointercancel', onCancel);
-    }
-
-    function getPitchSlotAt(x, y) {
-      const el = document.elementFromPoint(x, y);
-      if (!el) return null;
-      return el.closest('.tactical-position-slot');
-    }
-
-    function suppressUpcomingClick() {
-      function killClick(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        document.removeEventListener('click', killClick, true);
-      }
-      document.addEventListener('click', killClick, true);
-      setTimeout(() => document.removeEventListener('click', killClick, true), 400);
-    }
-
-    function placeBenchPlayerInSlot(playerId, slotIdx) {
-      if (isNaN(slotIdx) || slotIdx === null || slotIdx === undefined) return;
-      const player = appState.players.find(p => p.id === playerId);
-      if (!player) return;
-
-      appState.starting7[slotIdx] = playerId;
-      saveToStorage();
-      renderTacticalBoard();
-      showToast(`${player.name} colocado en el campo ⚽`);
     }
 
     function resetFormationToBest() {
@@ -2215,64 +2010,6 @@
     /* ==========================================================================
        8. MODALS & AUXILIARY FUNCTIONS
        ========================================================================== */
-    /* ==========================================================================
-       PLAYER PHOTO UPLOAD (Base64) & PREVIEW
-       ========================================================================== */
-    function setPhotoPreview(src) {
-      const img = document.getElementById('modal-photo-preview');
-      const icon = document.getElementById('modal-photo-preview-icon');
-      const wrap = document.getElementById('modal-photo-preview-wrap');
-      if (src) {
-        img.src = src;
-        img.classList.remove('hidden');
-        icon.classList.add('hidden');
-        wrap.classList.add('border-amber-500/70');
-        wrap.classList.remove('border-gray-700');
-        wrap.classList.add('scale-105');
-        setTimeout(() => wrap.classList.remove('scale-105'), 200);
-      } else {
-        img.src = '';
-        img.classList.add('hidden');
-        icon.classList.remove('hidden');
-        wrap.classList.remove('border-amber-500/70');
-        wrap.classList.add('border-gray-700');
-      }
-    }
-
-    function handlePlayerPhotoUpload(event) {
-      const file = event.target.files && event.target.files[0];
-      if (!file) return;
-
-      if (!file.type.startsWith('image/')) {
-        showToast('Por favor selecciona un archivo de imagen válido');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target.result;
-        document.getElementById('modal-player-photo-data').value = dataUrl;
-        document.getElementById('modal-player-photo').value = '';
-        setPhotoPreview(dataUrl);
-        showToast('Imagen cargada correctamente');
-      };
-      reader.onerror = () => showToast('No se pudo leer la imagen seleccionada');
-      reader.readAsDataURL(file);
-    }
-
-    function handlePlayerPhotoUrlInput(value) {
-      const trimmed = value.trim();
-      if (trimmed) {
-        // Typing a URL overrides any previously uploaded image file
-        document.getElementById('modal-player-photo-data').value = '';
-        document.getElementById('modal-player-photo-file').value = '';
-        setPhotoPreview(trimmed);
-      } else {
-        const uploaded = document.getElementById('modal-player-photo-data').value;
-        setPhotoPreview(uploaded || '');
-      }
-    }
-
     function openAddPlayerModal() {
       document.getElementById('player-modal-title').innerHTML = '<i class="fa-solid fa-user-plus text-amber-400"></i> Agregar Nuevo Jugador';
       document.getElementById('modal-player-id').value = '';
@@ -2280,9 +2017,6 @@
       document.getElementById('modal-player-pos').value = 'MED';
       document.getElementById('modal-player-number').value = 10;
       document.getElementById('modal-player-photo').value = '';
-      document.getElementById('modal-player-photo-data').value = '';
-      document.getElementById('modal-player-photo-file').value = '';
-      setPhotoPreview('');
       document.getElementById('modal-stat-pac').value = 75;
       document.getElementById('modal-stat-sho').value = 75;
       document.getElementById('modal-stat-pas').value = 75;
@@ -2302,15 +2036,7 @@
       document.getElementById('modal-player-name').value = p.name;
       document.getElementById('modal-player-pos').value = p.position;
       document.getElementById('modal-player-number').value = p.number || 10;
-      document.getElementById('modal-player-photo-file').value = '';
-      if (p.photo && p.photo.startsWith('data:')) {
-        document.getElementById('modal-player-photo').value = '';
-        document.getElementById('modal-player-photo-data').value = p.photo;
-      } else {
-        document.getElementById('modal-player-photo').value = p.photo || '';
-        document.getElementById('modal-player-photo-data').value = '';
-      }
-      setPhotoPreview(p.photo || '');
+      document.getElementById('modal-player-photo').value = p.photo || '';
       
       const s = p.baseStats || { pac: 75, sho: 75, pas: 75, dri: 75, def: 75, phy: 75 };
       document.getElementById('modal-stat-pac').value = s.pac;
@@ -2333,9 +2059,7 @@
       const name = document.getElementById('modal-player-name').value.trim();
       const pos = document.getElementById('modal-player-pos').value;
       const num = parseInt(document.getElementById('modal-player-number').value) || 10;
-      const uploadedPhoto = document.getElementById('modal-player-photo-data').value.trim();
-      const urlPhoto = document.getElementById('modal-player-photo').value.trim();
-      const photo = uploadedPhoto || urlPhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80';
+      const photo = document.getElementById('modal-player-photo').value.trim() || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80';
 
       const baseStats = {
         pac: parseInt(document.getElementById('modal-stat-pac').value) || 75,
@@ -2391,6 +2115,7 @@
       if (!confirm('¿Seguro que deseas eliminar a este jugador?')) return;
       appState.players = appState.players.filter(p => p.id !== id);
       appState.starting7 = appState.starting7.filter(pid => pid !== id);
+      sb.from('players').delete().eq('id', id);
       saveToStorage();
       renderAllTabs();
       showToast('Jugador eliminado');
@@ -2399,6 +2124,7 @@
     function deleteMatch(matchId) {
       if (!confirm('¿Seguro que deseas eliminar este registro de partido?')) return;
       appState.matches = appState.matches.filter(m => m.id !== matchId);
+      sb.from('matches').delete().eq('id', matchId);
       saveToStorage();
       renderMatchHistory();
       showToast('Partido eliminado');
@@ -2551,7 +2277,6 @@
 
       setTimeout(() => {
         toast.classList.remove('translate-y-2', 'opacity-0');
-        toast.classList.add('toast-visible');
       }, 10);
 
       setTimeout(() => {
