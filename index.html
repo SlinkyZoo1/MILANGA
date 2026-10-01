@@ -393,6 +393,30 @@
  .md-pitch{min-height:560px}
  header h1{font-size:1.05rem}
 }
+@keyframes zoomCard{0%{opacity:0;transform:perspective(900px) translateZ(-500px) rotateY(-70deg) scale(.4)}60%{opacity:1;transform:perspective(900px) translateZ(60px) rotateY(8deg) scale(1.08)}100%{transform:perspective(900px) translateZ(0) rotateY(0) scale(1)}}
+@keyframes infoOut{0%{opacity:0;transform:translateX(-170px) scale(.8)}100%{opacity:1;transform:none}}
+.d-zoom{animation:zoomCard .7s cubic-bezier(.2,.9,.3,1)}
+.d-out{animation:infoOut .6s .45s cubic-bezier(.2,.9,.3,1) both}
+.cap-badge{position:absolute;top:5px;right:8px;z-index:12;width:20px;height:20px;border-radius:50%;background:#fbbf24;color:#111;font-weight:900;font-size:.75rem;display:flex;align-items:center;justify-content:center;border:2px solid #000}
+.compact .cap-badge{width:16px;height:16px;font-size:.6rem;top:3px;right:6px}
+
+/* ===== Mejoras: animaciones, confirmaciones, emojis ===== */
+.fut-card-container:not(.drag-ghost-card){position:relative}
+@keyframes tabIn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+.tab-enter{animation:tabIn .4s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(.92)}to{opacity:1;transform:none}}
+.stagger-in > *{animation:cardIn .42s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--i,0) * 35ms)}
+@keyframes popIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:none}}
+#confirm-modal:not(.hidden) > div,#player-modal:not(.hidden) > div{animation:popIn .25s cubic-bezier(.2,.9,.3,1)}
+#confirm-modal:not(.hidden),#player-modal:not(.hidden){animation:fadeBg .2s ease-out}
+@keyframes fadeBg{from{opacity:0}to{opacity:1}}
+.btn-danger{flex:1;background:#dc2626;color:#fff;font-weight:800;font-size:.75rem;padding:.625rem 1rem;border-radius:.75rem}
+.btn-danger:hover{background:#ef4444}
+.btn-ok{flex:1;background:#f59e0b;color:#0b0e14;font-weight:900;font-size:.75rem;padding:.625rem 1rem;border-radius:.75rem}
+.btn-ok:hover{background:#fbbf24}
+.match-badge{position:absolute;right:-6px;bottom:-12px;z-index:15;max-width:90%;text-align:right;line-height:1.1;font-size:.8rem;padding:2px 6px;border-radius:999px;background:rgba(11,14,20,.88);border:1px solid rgba(251,191,36,.45);box-shadow:0 2px 6px rgba(0,0,0,.6)}
+body.dragging-card{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+@media (prefers-reduced-motion:reduce){.tab-enter,.stagger-in > *{animation:none!important}}
 </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -671,7 +695,7 @@
         <div class="flex justify-end">
           <button onclick="saveMatchRecord()" class="bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-gray-950 font-black px-6 py-3 rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center space-x-2 text-sm">
             <i class="fa-solid fa-floppy-disk text-base"></i>
-            <span>GUARDAR PARTIDO Y RECALCULAR MEDIAS</span>
+            <span>GUARDAR PARTIDO</span>
           </button>
         </div>
 
@@ -798,19 +822,19 @@
         </div>
         <div id="md-score" class="text-2xl font-black font-fut tracking-widest text-amber-400 bg-gray-950 px-3 py-1 rounded-xl border border-gray-800"></div>
       </div>
-      <div class="flex justify-center">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6"><div class="lg:col-span-8 flex justify-center">
         <div class="pitch-board w-full max-w-2xl p-4 relative shadow-2xl">
           <div class="pitch-lines"><div class="pitch-center-line"></div><div class="pitch-center-circle"></div><div class="pitch-penalty-area-top"></div><div class="pitch-penalty-area-bottom"></div></div>
           <div id="md-pitch" class="md-pitch relative z-10"></div>
         </div>
-      </div>
+      </div><div id="md-details" class="lg:col-span-4 bg-gray-900 border border-gray-800 rounded-2xl p-4 h-fit"></div></div>
       <p class="text-center text-[11px] text-gray-500">★ puntaje del partido (1 a 10) · ⚽ goles · 🧤 atajadas</p>
     </section>
   </main>
 
   <!-- MODAL 1: ADD / EDIT PLAYER -->
   <div id="player-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-gray-900 border border-gray-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative max-h-[92vh] overflow-y-auto">
       
       <button onclick="closePlayerModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">
         <i class="fa-solid fa-xmark"></i>
@@ -821,7 +845,9 @@
         Agregar Nuevo Jugador
       </h3>
 
-      <form id="player-form" onsubmit="handleSavePlayer(event)" class="space-y-3">
+      <div id="modal-card-preview" class="flex justify-center pointer-events-none" style="zoom:.8"></div>
+
+      <form id="player-form" onsubmit="handleSavePlayer(event)" oninput="updateModalPreview()" onchange="updateModalPreview()" class="space-y-3">
         <input type="hidden" id="modal-player-id">
 
         <div>
@@ -847,8 +873,20 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-300 uppercase mb-1">URL Foto Jugador (Transparente o Cuadrada)</label>
-          <input type="url" id="modal-player-photo" placeholder="https://..." class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm focus:border-amber-500 outline-none">
+          <label class="block text-xs font-bold text-gray-300 uppercase mb-1">Foto del jugador</label>
+          <div class="flex items-center gap-3">
+            <img id="modal-photo-preview" alt="" class="hidden w-14 h-14 shrink-0 rounded-xl object-cover border-2 border-dashed border-gray-700 bg-gray-800">
+            <div class="flex-grow space-y-2">
+              <label for="modal-photo-file" class="cursor-pointer w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 text-xs font-bold px-3 py-2 rounded-xl"><i class="fa-solid fa-upload text-amber-400"></i><span>Subir foto (galería o PC)</span></label>
+              <input type="file" id="modal-photo-file" accept="image/*" class="hidden" onchange="handlePhotoFile(event)">
+              <input type="url" id="modal-player-photo" placeholder="...o pega una URL de imagen" oninput="handlePhotoUrl(this.value)" class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-1.5 text-xs focus:border-amber-500 outline-none">
+            </div>
+          </div>
+          <input type="hidden" id="modal-photo-data" value="">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-300 uppercase mb-1">País</label>
+          <select id="modal-player-country" class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm focus:border-amber-500 outline-none"><option value="ar">Argentina</option><option value="uy">Uruguay</option><option value="br">Brasil</option><option value="cl">Chile</option><option value="py">Paraguay</option><option value="bo">Bolivia</option><option value="pe">Perú</option><option value="co">Colombia</option><option value="ve">Venezuela</option><option value="ec">Ecuador</option><option value="mx">México</option><option value="es">España</option><option value="it">Italia</option><option value="fr">Francia</option><option value="de">Alemania</option><option value="pt">Portugal</option><option value="us">Estados Unidos</option></select>
         </div>
 
         <!-- Initial Base Attr Stats -->
@@ -857,11 +895,11 @@
           
           <div class="grid grid-cols-3 gap-2">
             <div>
-              <label class="block text-[10px] text-gray-400">PAC (Ritmo)</label>
+              <label class="block text-[10px] text-gray-400">RIT (Ritmo)</label>
               <input type="number" id="modal-stat-pac" min="30" max="99" value="75" class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-2 py-1 text-xs text-center font-bold">
             </div>
             <div>
-              <label class="block text-[10px] text-gray-400">SHO (Tiro)</label>
+              <label class="block text-[10px] text-gray-400">TIR (Tiro)</label>
               <input type="number" id="modal-stat-sho" min="30" max="99" value="75" class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-2 py-1 text-xs text-center font-bold">
             </div>
             <div>
@@ -869,7 +907,7 @@
               <input type="number" id="modal-stat-pas" min="30" max="99" value="75" class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-2 py-1 text-xs text-center font-bold">
             </div>
             <div>
-              <label class="block text-[10px] text-gray-400">DRI (Regate)</label>
+              <label class="block text-[10px] text-gray-400">REG (Regate)</label>
               <input type="number" id="modal-stat-dri" min="30" max="99" value="75" class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-2 py-1 text-xs text-center font-bold">
             </div>
             <div>
@@ -877,7 +915,7 @@
               <input type="number" id="modal-stat-def" min="30" max="99" value="75" class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-2 py-1 text-xs text-center font-bold">
             </div>
             <div>
-              <label class="block text-[10px] text-gray-400">PHY (Físico)</label>
+              <label class="block text-[10px] text-gray-400">FIS (Físico)</label>
               <input type="number" id="modal-stat-phy" min="30" max="99" value="75" class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-2 py-1 text-xs text-center font-bold">
             </div>
           </div>
@@ -885,7 +923,7 @@
 
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="closePlayerModal()" class="bg-gray-800 text-gray-300 hover:bg-gray-700 text-xs px-4 py-2 rounded-xl font-bold">Cancelar</button>
-          <button type="submit" class="bg-amber-500 hover:bg-amber-400 text-gray-950 font-black text-xs px-5 py-2 rounded-xl shadow-lg">Guardar Jugador</button>
+          <button type="submit" id="modal-submit-btn" class="bg-amber-500 hover:bg-amber-400 text-gray-950 font-black text-xs px-5 py-2 rounded-xl shadow-lg">Guardar Jugador</button>
         </div>
 
       </form>
@@ -928,12 +966,11 @@
         </div>
 
         <!-- Career & Perf summary -->
-        <div class="space-y-3 flex-grow text-center sm:text-left">
+        <div id="detail-info" class="space-y-3 flex-grow text-center sm:text-left">
           <div class="flex items-center justify-center sm:justify-start gap-2">
             <h3 id="detail-player-name" class="text-2xl font-black text-white">--</h3>
-            <button id="detail-edit-btn" onclick="" class="hidden bg-gray-800 hover:bg-gray-700 text-amber-400 p-1.5 rounded-lg text-xs border border-gray-700" title="Editar Jugador">
-              <i class="fa-solid fa-pen"></i>
-            </button>
+            <button id="detail-edit-btn" onclick="" class="hidden bg-gray-800 hover:bg-gray-700 text-amber-400 p-1.5 rounded-lg text-xs border border-gray-700" title="Editar Jugador"><i class="fa-solid fa-pen"></i></button>
+            <button id="detail-cap-btn" class="hidden bg-gray-800 hover:bg-gray-700 text-amber-400 px-2 py-1 rounded-lg text-xs font-bold border border-gray-700"></button>
           </div>
 
           <p class="text-xs text-gray-400 font-semibold">
@@ -958,6 +995,10 @@
         </div>
       </div>
 
+      <div id="detail-swap" class="hidden border-t border-gray-800 pt-4">
+        <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Cambiar por (misma posición)</h4>
+        <div id="detail-swap-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+      </div>
       <!-- Match Performance History Log Table -->
       <div class="border-t border-gray-800 pt-4">
         <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">Desempeño en Partidos Recientes</h4>
@@ -981,6 +1022,16 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <div id="confirm-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto text-center">
+      <div id="confirm-body"></div>
+      <div class="flex gap-3 mt-5">
+        <button id="confirm-cancel" onclick="closeConfirm()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold text-xs px-4 py-2.5 rounded-xl border border-gray-700"></button>
+        <button id="confirm-ok" onclick="runConfirm()"></button>
+      </div>
     </div>
   </div>
 
@@ -1277,13 +1328,12 @@
         ]);
         if (pl.error || ma.error) throw (pl.error || ma.error);
         if (pl.data.length) appState.players = pl.data.map(r => r.data);
-        if (ma.data.length) {
-          appState.matches = ma.data.map(r => r.data).sort((a, b) => b.date.localeCompare(a.date));
-        }
+        appState.matches = ma.data.map(r => r.data).sort((a, b) => b.date.localeCompare(a.date));
         const s = se.data && se.data.data;
         if (s && s.formation) appState.formation = s.formation;
         if (s && s.starting7 && s.starting7.length === 7) appState.starting7 = s.starting7;
         document.getElementById('formation-select').value = appState.formation;
+        normalizeCountry();
         renderAllTabs();
       } catch (e) {
         console.error(e);
@@ -1304,6 +1354,7 @@
       appState.adminMode = false;
       appState.players = DEFAULT_PLAYERS;
       appState.matches = DEFAULT_MATCHES;
+      normalizeCountry();
       await loadData();
       subscribeRealtime();
       document.getElementById('admin-mode-toggle').checked = false;
@@ -1358,6 +1409,27 @@
       if (tabId === 'addMatch') renderMatchRegistrationForm();
       if (tabId === 'history') renderMatchHistory();
       if (tabId === 'stats') renderLeaderboard();
+
+      animateTab(activeContent);
+      if (tabId === 'squad') staggerChildren(document.getElementById('squad-cards-grid'));
+      if (tabId === 'history') staggerChildren(document.getElementById('match-history-list'));
+      if (tabId === 'addMatch') staggerChildren(document.getElementById('match-player-inputs-body'));
+      if (tabId === 'stats') staggerChildren(document.getElementById('leaderboard-table-body'));
+    }
+
+    function animateTab(el) {
+      if (!el) return;
+      el.classList.remove('tab-enter');
+      void el.offsetWidth;
+      el.classList.add('tab-enter');
+    }
+
+    function staggerChildren(container) {
+      if (!container) return;
+      container.classList.remove('stagger-in');
+      Array.from(container.children).forEach((c, i) => c.style.setProperty('--i', Math.min(i, 14)));
+      void container.offsetWidth;
+      container.classList.add('stagger-in');
     }
 
     async function toggleAdminMode(enabled) {
@@ -1413,6 +1485,7 @@
             <div class="fut-card-inner">
               <div class="fut-card-texture"></div>
 
+              ${player.captain ? '<div class="cap-badge">C</div>' : ''}
               <!-- Top Left Badge -->
               <div class="fut-badge-info">
                 ${m ? `<i class="fa-solid fa-star" style="font-size:.55em;color:#fbbf24"></i><span class="fut-ovr">${Number(m.matchRating).toFixed(1)}</span>` : `<span class="fut-ovr">${player.currentOvr || 80}</span>`}
@@ -1429,16 +1502,15 @@
               </div>
 
               <!-- Stats Grid -->
-              <div class="fut-stats-grid" ${m ? 'style="display:none"' : ''}>
-                <div class="fut-stat-item"><span class="fut-stat-val">${stats.pac}</span><span class="fut-stat-lbl">PAC</span></div>
-                <div class="fut-stat-item"><span class="fut-stat-val">${stats.dri}</span><span class="fut-stat-lbl">DRI</span></div>
-                <div class="fut-stat-item"><span class="fut-stat-val">${stats.sho}</span><span class="fut-stat-lbl">SHO</span></div>
+              <div class="fut-stats-grid">
+                <div class="fut-stat-item"><span class="fut-stat-val">${stats.pac}</span><span class="fut-stat-lbl">RIT</span></div>
+                <div class="fut-stat-item"><span class="fut-stat-val">${stats.dri}</span><span class="fut-stat-lbl">REG</span></div>
+                <div class="fut-stat-item"><span class="fut-stat-val">${stats.sho}</span><span class="fut-stat-lbl">TIR</span></div>
                 <div class="fut-stat-item"><span class="fut-stat-val">${stats.def}</span><span class="fut-stat-lbl">DEF</span></div>
                 <div class="fut-stat-item"><span class="fut-stat-val">${stats.pas}</span><span class="fut-stat-lbl">PAS</span></div>
-                <div class="fut-stat-item"><span class="fut-stat-val">${stats.phy}</span><span class="fut-stat-lbl">PHY</span></div>
+                <div class="fut-stat-item"><span class="fut-stat-val">${stats.phy}</span><span class="fut-stat-lbl">FIS</span></div>
               </div>
 
-              ${m ? matchBadgesHTML(player, m) : ''}
               ${showForm && player.avgRating ? `
                 <div class="fut-form-badge">
                   <i class="fa-solid fa-star text-amber-400"></i>
@@ -1448,6 +1520,7 @@
 
             </div>
           </div>
+          ${m ? matchBadgesHTML(player, m) : ''}
         </div>
       `;
     }
@@ -1543,7 +1616,7 @@
         slotEl.style.left = `${slot.left}%`;
         slotEl.dataset.slotIndex = idx;
         if (flashSlots.includes(idx)) slotEl.classList.add('slot-landed');
-        slotEl.onclick = () => setTimeout(() => openSwapModal(idx, slot.title), 280);
+        if (!player) slotEl.onclick = () => openSwapModal(idx, slot.title);
         if (player) {
           slotEl.addEventListener('pointerdown', (e) => {
             if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -1552,7 +1625,7 @@
         }
 
         if (player) {
-          slotEl.innerHTML = createFutCardHTML(player, { compact: true });
+          slotEl.innerHTML = createFutCardHTML(player, { compact: true, showForm: false });
         } else {
           slotEl.innerHTML = `
             <div class="w-20 h-28 bg-gray-900/80 border-2 border-dashed border-amber-500/50 rounded-xl flex flex-col items-center justify-center text-amber-400 p-2 text-center hover:bg-gray-800 transition">
@@ -1583,7 +1656,7 @@
         const wrap = document.createElement('div');
         wrap.className = 'bench-fut-card-wrap flex flex-col items-center gap-1 select-none';
         if (flashBench === p.id) wrap.classList.add('bench-landed');
-        wrap.innerHTML = createFutCardHTML(p, { compact: true }) +
+        wrap.innerHTML = createFutCardHTML(p, { compact: true, showForm: false }) +
           '<span class="text-[9px] text-gray-500 font-semibold text-center leading-tight">Arrastra a la cancha</span>';
         const c = wrap.querySelector('.fut-card-container');
         if (c) c.style.animationDelay = (i * 0.04) + 's';
@@ -1600,6 +1673,30 @@
       if (!src) return;
       const startX = startEvent.clientX, startY = startEvent.clientY;
       let dragging = false, ghost = null;
+      const headerEl = document.querySelector('header');
+      const topZone = (headerEl ? headerEl.offsetHeight : 0) + 90;
+      const botZone = 110;
+      let scrollSpeed = 0;
+      const scroller = setInterval(() => { if (scrollSpeed) window.scrollBy(0, scrollSpeed); }, 16);
+      const calcSpeed = (y) => {
+        if (y < topZone) return -(2 + Math.min(1, (topZone - y) / topZone) * 22);
+        if (y > window.innerHeight - botZone) return 2 + Math.min(1, (y - (window.innerHeight - botZone)) / botZone) * 22;
+        return 0;
+      };
+      const smoothScrollToBoard = () => {
+        if (!board) return;
+        const target = Math.max(0, board.getBoundingClientRect().top + window.scrollY - (headerEl ? headerEl.offsetHeight : 0) - 8);
+        const from = window.scrollY, dist = target - from, dur = 380, t0 = performance.now();
+        const step = (now) => {
+          const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+          window.scrollTo(0, from + dist * e);
+          if (k < 1 && dragging) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      };
+      document.body.classList.add('dragging-card');
+      const noMenu = (e) => e.preventDefault();
+      document.addEventListener('contextmenu', noMenu);
       const board = document.getElementById('pitch-board-el');
       const panel = document.getElementById('bench-panel');
       const dim = fromSlot === null ? 'bench-dragging-source' : 'slot-drag-dim';
@@ -1613,6 +1710,7 @@
         if (!dragging && Math.hypot(ev.clientX - startX, ev.clientY - startY) > 8) {
           dragging = true;
           wrapEl.classList.add(dim);
+          if (fromSlot === null && window.innerWidth < 1024) smoothScrollToBoard();
           if (board) board.classList.add('drag-active');
           if (fromSlot !== null && panel) panel.classList.add('bench-drop-ready');
           const r = src.getBoundingClientRect();
@@ -1624,6 +1722,7 @@
         }
         if (dragging && ghost) {
           ev.preventDefault();
+          scrollSpeed = calcSpeed(ev.clientY);
           ghost.style.left = (ev.clientX - ghost.offsetWidth / 2) + 'px';
           ghost.style.top = (ev.clientY - ghost.offsetHeight / 2) + 'px';
           clearHL();
@@ -1636,6 +1735,9 @@
         document.removeEventListener('pointermove', onMove);
         document.removeEventListener('pointerup', onUp);
         document.removeEventListener('pointercancel', onUp);
+        clearInterval(scroller); scrollSpeed = 0;
+        document.body.classList.remove('dragging-card');
+        setTimeout(() => document.removeEventListener('contextmenu', noMenu), 50);
         const was = dragging;
         clearHL();
         if (board) board.classList.remove('drag-active');
@@ -1782,6 +1884,7 @@
                 <i class="fa-solid fa-pen text-[9px]"></i>
                 <span>Editar</span>
               </button>
+              <button onclick="setCaptain('${player.id}')" class="bg-gray-800 hover:bg-gray-700 text-amber-400 text-[11px] font-black px-2 py-1 rounded-lg border border-gray-700" title="Capitán">C</button>
               <button onclick="deletePlayer('${player.id}')" class="bg-gray-800 hover:bg-red-900/50 text-red-400 text-[11px] p-1.5 rounded-lg border border-gray-700">
                 <i class="fa-solid fa-trash text-[9px]"></i>
               </button>
@@ -1909,7 +2012,7 @@
       }
     }
 
-    function saveMatchRecord() {
+    async function doSaveMatchRecord() {
       const opponent = document.getElementById('match-opponent').value.trim();
       const date = document.getElementById('match-date').value;
       const ourGoals = parseInt(document.getElementById('match-our-goals').value) || 0;
@@ -1977,7 +2080,8 @@
       };
 
       appState.matches.unshift(newMatch);
-      saveToStorage();
+      appState.matches.sort((a, b) => b.date.localeCompare(a.date));
+      await saveToStorage();
 
       showToast(`Partido contra ${opponent} guardado y Medias OVR actualizadas`);
       switchTab('history');
@@ -2141,11 +2245,16 @@
        ========================================================================== */
     function openAddPlayerModal() {
       document.getElementById('player-modal-title').innerHTML = '<i class="fa-solid fa-user-plus text-amber-400"></i> Agregar Nuevo Jugador';
+      document.getElementById('modal-submit-btn').textContent = 'Guardar Jugador';
       document.getElementById('modal-player-id').value = '';
       document.getElementById('modal-player-name').value = '';
       document.getElementById('modal-player-pos').value = 'MED';
       document.getElementById('modal-player-number').value = 10;
       document.getElementById('modal-player-photo').value = '';
+      document.getElementById('modal-photo-data').value = '';
+      document.getElementById('modal-photo-file').value = '';
+      setPhotoPreview('');
+      document.getElementById('modal-player-country').value = 'ar';
       document.getElementById('modal-stat-pac').value = 75;
       document.getElementById('modal-stat-sho').value = 75;
       document.getElementById('modal-stat-pas').value = 75;
@@ -2154,6 +2263,7 @@
       document.getElementById('modal-stat-phy').value = 75;
 
       document.getElementById('player-modal').classList.remove('hidden');
+      updateModalPreview();
     }
 
     function openEditPlayerModal(id) {
@@ -2161,11 +2271,17 @@
       if (!p) return;
 
       document.getElementById('player-modal-title').innerHTML = '<i class="fa-solid fa-user-pen text-amber-400"></i> Editar Jugador';
+      document.getElementById('modal-submit-btn').textContent = 'Guardar cambios';
       document.getElementById('modal-player-id').value = p.id;
       document.getElementById('modal-player-name').value = p.name;
       document.getElementById('modal-player-pos').value = p.position;
       document.getElementById('modal-player-number').value = p.number || 10;
-      document.getElementById('modal-player-photo').value = p.photo || '';
+      const isData = (p.photo || '').startsWith('data:');
+      document.getElementById('modal-player-photo').value = isData ? '' : (p.photo || '');
+      document.getElementById('modal-photo-data').value = isData ? p.photo : '';
+      document.getElementById('modal-photo-file').value = '';
+      setPhotoPreview(p.photo || '');
+      document.getElementById('modal-player-country').value = p.country || 'ar';
       
       const s = p.baseStats || { pac: 75, sho: 75, pas: 75, dri: 75, def: 75, phy: 75 };
       document.getElementById('modal-stat-pac').value = s.pac;
@@ -2176,6 +2292,7 @@
       document.getElementById('modal-stat-phy').value = s.phy;
 
       document.getElementById('player-modal').classList.remove('hidden');
+      updateModalPreview();
     }
 
     function closePlayerModal() {
@@ -2188,7 +2305,8 @@
       const name = document.getElementById('modal-player-name').value.trim();
       const pos = document.getElementById('modal-player-pos').value;
       const num = parseInt(document.getElementById('modal-player-number').value) || 10;
-      const photo = document.getElementById('modal-player-photo').value.trim() || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80';
+      const photo = document.getElementById('modal-photo-data').value || document.getElementById('modal-player-photo').value.trim() || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80';
+      const country = document.getElementById('modal-player-country').value;
 
       const baseStats = {
         pac: parseInt(document.getElementById('modal-stat-pac').value) || 75,
@@ -2206,6 +2324,7 @@
           p.position = pos;
           p.number = num;
           p.photo = photo;
+          p.country = country; p.flag = flagUrl(country);
           p.baseStats = baseStats;
           p.currentOvr = calculateDynamicOvr(p);
         }
@@ -2216,7 +2335,7 @@
           position: pos,
           number: num,
           photo,
-          flag: 'https://flagcdn.com/w40/ar.png',
+          flag: flagUrl(country), country,
           baseStats,
           currentOvr: 75,
           matchesPlayed: 0,
@@ -2237,26 +2356,68 @@
       saveToStorage();
       closePlayerModal();
       renderAllTabs();
-      showToast('Jugador guardado con éxito');
+      showToast(id ? 'Jugador actualizado' : 'Jugador agregado con éxito');
+    }
+
+    async function dbDelete(table, id) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { showToast('Inicia sesión como admin para eliminar'); return false; }
+      isSaving = true;
+      try {
+        const { error } = await sb.from(table).delete().eq('id', id);
+        if (error) { console.error(error); showToast('Error al eliminar en Supabase'); return false; }
+        const chk = await sb.from(table).select('id').eq('id', id);
+        if (!chk.error && chk.data && chk.data.length) {
+          showToast('Supabase no permitió borrar (revisa la política DELETE de la tabla ' + table + ')');
+          return false;
+        }
+        return true;
+      } finally {
+        setTimeout(() => { isSaving = false; }, 1000);
+      }
     }
 
     function deletePlayer(id) {
-      if (!confirm('¿Seguro que deseas eliminar a este jugador?')) return;
-      appState.players = appState.players.filter(p => p.id !== id);
-      appState.starting7 = appState.starting7.map(pid => pid === id ? null : pid);
-      sb.from('players').delete().eq('id', id);
-      saveToStorage();
-      renderAllTabs();
-      showToast('Jugador eliminado');
+      const p = appState.players.find(x => x.id === id);
+      if (!p) return;
+      openConfirm('<div class="pointer-events-none flex justify-center mb-4">' + createFutCardHTML(p, { compact: false, showForm: false }) + '</div><p class="text-sm font-bold text-white">¿Estás seguro que quieres eliminar a ' + esc(p.name) + '?</p><p class="text-xs text-gray-400 mt-1">Esta acción no se puede deshacer.</p>', 'Eliminar', 'Cancelar', async () => {
+        if (!(await dbDelete('players', id))) return;
+        appState.players = appState.players.filter(x => x.id !== id);
+        appState.starting7 = appState.starting7.map(pid => pid === id ? null : pid);
+        await saveToStorage();
+        renderAllTabs();
+        showToast('Jugador eliminado');
+      }, 'danger');
+    }
+
+    function revertMatchStats(m) {
+      m.playerStats.forEach(ps => {
+        const p = appState.players.find(x => x.id === ps.playerId);
+        if (!p) return;
+        const dec = (k, v) => { p[k] = Math.max(0, (p[k] || 0) - (v || 0)); };
+        dec('matchesPlayed', 1); dec('totalGoals', ps.goals); dec('totalAssists', ps.assists);
+        dec('totalShots', ps.shots); dec('totalSaves', ps.saves); dec('totalDuelsWon', ps.duelsWon);
+        dec('yellowCards', ps.yellowCards); dec('redCards', ps.redCards);
+        const h = p.ratingsHistory || [];
+        const idx = h.lastIndexOf(ps.matchRating);
+        if (idx !== -1) h.splice(idx, 1);
+        p.ratingsHistory = h;
+        p.avgRating = h.length ? parseFloat((h.reduce((s, r) => s + r, 0) / h.length).toFixed(2)) : 0;
+        p.currentOvr = calculateDynamicOvr(p);
+      });
     }
 
     function deleteMatch(matchId) {
-      if (!confirm('¿Seguro que deseas eliminar este registro de partido?')) return;
-      appState.matches = appState.matches.filter(m => m.id !== matchId);
-      sb.from('matches').delete().eq('id', matchId);
-      saveToStorage();
-      renderMatchHistory();
-      showToast('Partido eliminado');
+      const m = appState.matches.find(x => x.id === matchId);
+      if (!m) return;
+      openConfirm('<p class="text-3xl mb-2">🗑️</p><p class="text-sm font-bold text-white">¿Estás seguro que quieres eliminar el partido vs ' + esc(m.opponent) + '?</p><p class="text-xs text-gray-400 mt-1">' + m.date + ' · ' + m.ourGoals + ' - ' + m.theirGoals + '</p><p class="text-[11px] text-gray-500 mt-2">Se descontarán sus estadísticas de los jugadores.</p>', 'Eliminar', 'Cancelar', async () => {
+        if (!(await dbDelete('matches', matchId))) return;
+        revertMatchStats(m);
+        appState.matches = appState.matches.filter(x => x.id !== matchId);
+        await saveToStorage();
+        renderAllTabs();
+        showToast('Partido eliminado');
+      }, 'danger');
     }
 
     function openSwapModal(slotIdx, title) {
@@ -2324,7 +2485,9 @@
       appState.selectedSwapSlotIndex = null;
     }
 
-    function openPlayerDetailModal(id) {
+    let detailSlot = null;
+    function openPlayerDetailModal(id, slotIdx = null) {
+      detailSlot = slotIdx;
       const p = appState.players.find(x => x.id === id);
       if (!p) return;
 
@@ -2379,7 +2542,22 @@
         `;
       }
 
+      let ex = document.getElementById('detail-extra');
+      if (!ex) { ex = document.createElement('div'); ex.id = 'detail-extra'; ex.className = 'grid grid-cols-3 gap-2'; document.getElementById('detail-info').appendChild(ex); }
+      const box = (l, v, c) => '<div class="bg-gray-950 p-2 rounded-xl border border-gray-800 text-center"><span class="block text-[10px] text-gray-400 uppercase font-bold">' + l + '</span><span class="text-lg font-fut font-bold ' + c + '">' + v + '</span></div>';
+      ex.innerHTML = box('Media', p.currentOvr, 'text-yellow-400') + box('Asist.', p.totalAssists || 0, 'text-emerald-400') + box('Atajadas', p.totalSaves || 0, 'text-blue-400') + box('Duelos G.', p.totalDuelsWon || 0, 'text-gray-200') + box('Amarillas', p.yellowCards || 0, 'text-yellow-400') + box('Rojas', p.redCards || 0, 'text-red-400');
+      const cb = document.getElementById('detail-cap-btn');
+      cb.classList.toggle('hidden', !appState.adminMode);
+      cb.textContent = p.captain ? 'C · Quitar capitán' : 'C · Capitán';
+      cb.onclick = () => { setCaptain(p.id); closeDetailModal(); };
+      const sw = document.getElementById('detail-swap'), list = document.getElementById('detail-swap-list');
+      if (slotIdx !== null) {
+        const cands = appState.players.filter(x => x.position === p.position && x.id !== p.id);
+        list.innerHTML = cands.length ? cands.map(x => { const on = appState.starting7.includes(x.id); return '<div onclick="swapFromDetail(\'' + x.id + '\')" class="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-gray-700 bg-gray-800 hover:bg-gray-700 cursor-pointer"><div class="flex items-center gap-2 min-w-0"><img class="w-8 h-8 rounded-full object-cover border border-amber-500/30" src="' + x.photo + '"><div class="min-w-0"><span class="font-bold text-xs text-white block truncate">' + x.name + '</span><span class="text-[10px] text-gray-400">OVR ' + x.currentOvr + ' · ' + (on ? 'En cancha' : 'Banquillo') + '</span></div></div><span class="text-xs font-bold text-emerald-400">' + (on ? 'Intercambiar' : 'Cambiar') + '</span></div>'; }).join('') : '<p class="text-xs text-gray-500 col-span-full">No hay otros jugadores de esta posición.</p>';
+        sw.classList.remove('hidden');
+      } else sw.classList.add('hidden');
       document.getElementById('detail-modal').classList.remove('hidden');
+      [['detail-card-slot', 'd-zoom'], ['detail-info', 'd-out']].forEach(([i, c]) => { const e = document.getElementById(i); e.classList.remove(c); void e.offsetWidth; e.classList.add(c); });
     }
 
     function closeDetailModal() {
@@ -2388,9 +2566,21 @@
     }
 
     function cardTapOpen(el, id) {
+      if (el.closest('#detail-modal') || el.closest('#confirm-modal')) return;
+      const slot = el.closest('.tactical-position-slot');
+      const idx = slot ? parseInt(slot.dataset.slotIndex, 10) : null;
       const c = el.closest('.fut-card-container');
       if (c) { c.classList.remove('card-tap'); void c.offsetWidth; c.classList.add('card-tap'); }
-      setTimeout(() => openPlayerDetailModal(id), 280);
+      setTimeout(() => openPlayerDetailModal(id, idx), 280);
+    }
+
+    function swapFromDetail(pid) {
+      if (detailSlot === null) return;
+      const cur = appState.starting7[detailSlot];
+      flashSlots = [detailSlot];
+      flashBench = appState.starting7.includes(pid) ? null : cur;
+      appState.selectedSwapSlotIndex = detailSlot;
+      selectSwapCandidate(pid);
     }
 
     function matchBadgesHTML(player, ps) {
@@ -2399,7 +2589,7 @@
       if (!n) return '';
       const icon = gk ? '🧤' : '⚽';
       const shown = n > 5 ? icon + '×' + n : icon.repeat(n);
-      return '<div style="position:absolute;right:5px;bottom:6px;max-width:75%;text-align:right;line-height:1.1;font-size:.85rem;z-index:10;text-shadow:0 1px 3px #000">' + shown + '</div>';
+      return '<div class="match-badge">' + shown + '</div>';
     }
 
     function openMatchDetail(matchId) {
@@ -2409,17 +2599,172 @@
       document.getElementById('md-title').textContent = 'vs ' + m.opponent;
       document.getElementById('md-sub').textContent = m.date + ' · ' + res;
       document.getElementById('md-score').textContent = m.ourGoals + ' - ' + m.theirGoals;
+      const P = id => appState.players.find(x => x.id === id);
       const rows = { DEL: [], MED: [], DEF: [], ARQ: [] };
-      m.playerStats.forEach(ps => {
-        const p = appState.players.find(x => x.id === ps.playerId);
-        if (p && rows[p.position]) rows[p.position].push({ p, ps });
-      });
+      m.playerStats.forEach(ps => { const p = P(ps.playerId); if (p && rows[p.position]) rows[p.position].push({ p, ps }); });
       document.getElementById('md-pitch').innerHTML = ['DEL', 'MED', 'DEF', 'ARQ'].map(pos =>
         '<div class="flex justify-around items-center flex-wrap gap-2">' +
         rows[pos].map(x => createFutCardHTML(x.p, { compact: true, showForm: false, match: x.ps })).join('') + '</div>').join('');
+      const ps = m.playerStats, maxMin = Math.max(0, ...ps.map(s => s.minutes));
+      const tot = k => ps.reduce((a, s) => a + (s[k] || 0), 0);
+      const line = s => { const p = P(s.playerId); if (!p) return ''; const ic = '⚽'.repeat(Math.min(s.goals || 0, 6)) + (s.assists ? ' 🅰️' + s.assists : '') + (s.saves ? ' 🧤' + s.saves : '') + ' 🟨'.repeat(s.yellowCards || 0) + ' 🟥'.repeat(s.redCards || 0);
+        return '<div class="flex items-center justify-between gap-2 py-1.5 border-b border-gray-800/60 text-xs"><span class="font-bold text-white truncate">' + p.name + ' <span class="text-[10px] text-amber-400">' + p.position + '</span></span><span class="text-gray-400 whitespace-nowrap">' + s.minutes + "' " + ic + '</span></div>'; };
+      const subs = ps.filter(s => s.minutes < maxMin);
+      const stat = (l, v) => '<div class="bg-gray-950 border border-gray-800 rounded-xl p-2 text-center"><span class="block text-[10px] text-gray-400 uppercase font-bold">' + l + '</span><span class="font-fut font-bold text-amber-400 text-lg">' + v + '</span></div>';
+      document.getElementById('md-details').innerHTML =
+        '<h3 class="font-bold text-white text-sm mb-3">Detalles del partido</h3><div class="grid grid-cols-3 gap-2 mb-4">' + stat('Goles', tot('goals')) + stat('Asist.', tot('assists')) + stat('Atajadas', tot('saves')) + stat('Amarillas', tot('yellowCards')) + stat('Rojas', tot('redCards')) + stat('Jugaron', ps.length) + '</div>' +
+        '<h4 class="text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-1">Quiénes jugaron · minutos · acciones</h4>' + ps.map(line).join('') +
+        '<h4 class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mt-4 mb-1">Cambios (jugaron menos minutos)</h4>' +
+        (subs.length ? subs.map(s => { const p = P(s.playerId); return p ? '<div class="text-xs text-gray-300 py-1">🔄 ' + p.name + ' · ' + s.minutes + "'</div>" : ''; }).join('') : '<p class="text-xs text-gray-500">Sin cambios registrados.</p>') +
+        '<p class="text-[10px] text-gray-600 mt-4">El minuto de cada gol y las faltas todavía no se registran en el formulario del partido.</p>';
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.getElementById('tab-matchDetail').classList.remove('hidden');
+      animateTab(document.getElementById('tab-matchDetail'));
+      staggerChildren(document.getElementById('md-pitch'));
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ==========================================================================
+       UTILIDADES, CONFIRMACIÓN, FOTO, PAÍS, CAPITÁN, GUARDAR PARTIDO
+       ========================================================================== */
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function flagUrl(code) {
+      return 'https://flagcdn.com/w40/' + (code || 'ar') + '.png';
+    }
+
+    function normalizeCountry() {
+      appState.players.forEach(p => {
+        if (!p.country) {
+          const m = /\/w\d+\/([a-z]{2})\.png/i.exec(p.flag || '');
+          p.country = m ? m[1].toLowerCase() : 'ar';
+        }
+        p.flag = flagUrl(p.country);
+      });
+    }
+
+    /* ---- Ventana de confirmación ---- */
+    let confirmCallback = null;
+
+    function openConfirm(bodyHtml, okLabel, cancelLabel, onOk, kind) {
+      confirmCallback = onOk;
+      document.getElementById('confirm-body').innerHTML = bodyHtml;
+      const ok = document.getElementById('confirm-ok');
+      const cancel = document.getElementById('confirm-cancel');
+      ok.textContent = okLabel || 'Aceptar';
+      cancel.textContent = cancelLabel || 'Cancelar';
+      ok.className = kind === 'danger' ? 'btn-danger' : 'btn-ok';
+      ok.disabled = false;
+      document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function closeConfirm() {
+      confirmCallback = null;
+      document.getElementById('confirm-modal').classList.add('hidden');
+    }
+
+    async function runConfirm() {
+      const cb = confirmCallback;
+      const ok = document.getElementById('confirm-ok');
+      ok.disabled = true;
+      closeConfirm();
+      if (cb) {
+        try { await cb(); } catch (e) { console.error(e); showToast('Ocurrió un error, intenta de nuevo'); }
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (!document.getElementById('confirm-modal').classList.contains('hidden')) closeConfirm();
+        else if (!document.getElementById('player-modal').classList.contains('hidden')) closePlayerModal();
+      }
+    });
+
+    /* ---- Guardar partido (con confirmación) ---- */
+    function saveMatchRecord() {
+      if (!appState.adminMode) { showToast('Activa el Modo Admin para guardar partidos'); return; }
+      const opponent = document.getElementById('match-opponent').value.trim();
+      if (!opponent) { showToast('Por favor ingresa el nombre del equipo rival'); document.getElementById('match-opponent').focus(); return; }
+      const date = document.getElementById('match-date').value;
+      if (!date) { showToast('Selecciona la fecha del partido'); return; }
+      const og = parseInt(document.getElementById('match-our-goals').value) || 0;
+      const tg = parseInt(document.getElementById('match-their-goals').value) || 0;
+      const played = appState.players.filter(p => { const c = document.getElementById('m-play-' + p.id); return c && c.checked; }).length;
+      if (!played) { showToast('Marca al menos un jugador que haya jugado'); return; }
+      const res = og > tg ? 'Victoria' : og === tg ? 'Empate' : 'Derrota';
+      openConfirm('<p class="text-3xl mb-2">💾</p><p class="text-sm font-bold text-white">¿Quieres guardar este partido?</p>' +
+        '<div class="mt-3 bg-gray-950 border border-gray-800 rounded-xl p-3"><p class="text-xs text-gray-400">vs ' + esc(opponent) + ' · ' + date + '</p>' +
+        '<p class="text-2xl font-black font-fut text-amber-400 tracking-widest my-1">' + og + ' - ' + tg + '</p>' +
+        '<p class="text-xs text-gray-300">' + res + ' · ' + played + ' jugadores</p></div>',
+        'Guardar', 'No guardar', () => doSaveMatchRecord(), 'ok');
+    }
+
+    /* ---- Capitán ---- */
+    function setCaptain(id) {
+      const was = appState.players.find(p => p.id === id);
+      const makeCap = !(was && was.captain);
+      appState.players.forEach(p => { p.captain = (p.id === id) && makeCap; });
+      saveToStorage();
+      renderAllTabs();
+      showToast(makeCap ? (was.name + ' es el capitán ©') : 'Capitanía quitada');
+    }
+
+    /* ---- Foto del jugador (modal) ---- */
+    function setPhotoPreview(src) {
+      const img = document.getElementById('modal-photo-preview');
+      if (src) { img.src = src; img.classList.remove('hidden'); }
+      else { img.removeAttribute('src'); img.classList.add('hidden'); }
+    }
+
+    function handlePhotoFile(e) {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const im = new Image();
+        im.onload = () => {
+          const max = 400, s = Math.min(1, max / Math.max(im.width, im.height));
+          const c = document.createElement('canvas');
+          c.width = Math.round(im.width * s); c.height = Math.round(im.height * s);
+          c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+          const data = c.toDataURL('image/jpeg', 0.82);
+          document.getElementById('modal-photo-data').value = data;
+          document.getElementById('modal-player-photo').value = '';
+          setPhotoPreview(data);
+          updateModalPreview();
+        };
+        im.src = ev.target.result;
+      };
+      reader.readAsDataURL(f);
+    }
+
+    function handlePhotoUrl(v) {
+      document.getElementById('modal-photo-data').value = '';
+      setPhotoPreview((v || '').trim());
+    }
+
+    /* ---- Tarjeta en vivo dentro de la ventana de editar/agregar ---- */
+    function updateModalPreview() {
+      const box = document.getElementById('modal-card-preview');
+      if (!box) return;
+      const g = id => document.getElementById(id);
+      const id = g('modal-player-id').value;
+      const base = id ? appState.players.find(x => x.id === id) : null;
+      const st = k => Math.min(99, Math.max(30, parseInt(g('modal-stat-' + k).value) || 75));
+      const country = g('modal-player-country').value || 'ar';
+      const p = Object.assign({}, base || {}, {
+        id: id || 'preview',
+        name: esc(g('modal-player-name').value.trim() || 'Nombre'),
+        position: g('modal-player-pos').value,
+        number: parseInt(g('modal-player-number').value) || 10,
+        photo: g('modal-photo-data').value || g('modal-player-photo').value.trim() || (base && base.photo) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
+        flag: flagUrl(country),
+        baseStats: { pac: st('pac'), sho: st('sho'), pas: st('pas'), dri: st('dri'), def: st('def'), phy: st('phy') }
+      });
+      p.currentOvr = calculateDynamicOvr(p);
+      box.innerHTML = createFutCardHTML(p, { compact: false, showForm: false });
     }
 
     function renderAllTabs() {
